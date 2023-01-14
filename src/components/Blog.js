@@ -13,7 +13,7 @@ const Blog = ({ blog, handleLike, currentUser, handleRemove }) => {
   const removeable = currentUser.username === blog.user.username
 
   return(
-    <div style={blogStyle}>
+    <div style={blogStyle} className="blog">
       <p>
         {blog.title} {blog.author} 
         <button onClick={() => setHidden(!hidden)}>
