@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import Blog from './components/Blog'
+import Blogs from './components/Blogs'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import LoginForm from './components/LoginForm'
+import BlogForm from './components/BlogForm'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
 
   const [errorMessage, setErrorMessage] = useState("")
 
-  // login form
+  // for login form
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -20,6 +22,10 @@ const App = () => {
         username, password,
       })
       setUser(user)
+      setErrorMessage('SUCCESS: login')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 2000)
       blogService.setToken(user.token)
       window.localStorage.setItem(
         'loggedUser', JSON.stringify(user)
@@ -40,28 +46,64 @@ const App = () => {
     blogService.setToken(null)
   }
 
-  // new blog form
-  const [newBlog, setNewBlog] = useState({ title: "", author: "", url: "" })
-  const handleNewBlog = async(event) => {
-    event.preventDefault()
-    try {
-      const returnedBlog = await blogService.create(newBlog)
-      setNewBlog({ title: "", author: "", url: "" })
-      setBlogs(blogs.concat(returnedBlog))
-    } catch (error) {
-      setErrorMessage('ERROR: sth')
 
-      if (error.response === undefined || error.response.data === undefined) {
-        setErrorMessage('ERROR: unknown error, see console')
-        console.error(error.response || error)
-      }
-      else {
-        setErrorMessage('ERROR: ' + error.response.data.error)
-      }
-      setTimeout(() => {
-        setErrorMessage(null)
-      }, 3000)
+  const handleLike = blog => {
+    const newBlog = {...blog, user: blog.user.id, likes: blog.likes + 1} 
+    blogService
+      .update(blog.id, newBlog)
+      .then(returnedBlog => {
+        setBlogs(blogs.map(item => item.id === blog.id ? {...blog, likes: blog.likes + 1} : item))
+      })
+      .catch(error => {
+        console.error(error)
+      })
+  }
+
+  const handleRemove = blog => {
+    if (window.confirm(`remove ${blog.title}?`)) {
+      blogService
+        .remove(blog.id)
+        .then(() => {
+          setBlogs(blogs.filter(item => item.id !== blog.id))
+          setErrorMessage(`SUCCESS: removed ${blog.title}`)
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 3000)
+        })
+        .catch(error => {
+          setErrorMessage(`ERROR: cannot remove`)
+          console.error(error.response || error)
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 3000)
+        })
     }
+  }
+
+  // for blog form
+  const handleNewBlog = newBlog => {
+    blogService
+      .create(newBlog)
+      .then(returnedBlog => {
+        setBlogs(blogs.concat(returnedBlog))
+
+        setErrorMessage(`SUCCESS: created new blog ${newBlog.title}`)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 3000)
+      })
+      .catch(error => {
+        if (error.response === undefined || error.response.data === undefined) {
+          setErrorMessage('ERROR: unknown error, see console')
+          console.error(error.response || error)
+        }
+        else {
+          setErrorMessage('ERROR: ' + error.response.data.error)
+        }
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 3000)
+      })    
   }
 
   // AT LOADING PAGE: LOAD BLOG AND PAST USER
@@ -86,76 +128,37 @@ const App = () => {
     return (
       <div>
         <h2>log in</h2>
-        <div>{errorMessage}</div>
-        <form onSubmit={handleLogin}>
-          <div>
-              username
-              <input
-                type="text"
-                value={username}
-                name="Username"
-                onChange={({ target }) => setUsername(target.value)}
-              />
-          </div>
-          <div>
-              password
-              <input
-                type="password"
-                value={password}
-                name="Password"
-                onChange={({ target }) => setPassword(target.value)}
-              />
-          </div>
-          <button type="submit">login</button>
-        </form>
+        <strong>{errorMessage}</strong>
+        <LoginForm
+          username={username}
+          password={password}
+          handleUsername={({ target }) => setUsername(target.value)}
+          handlePassword={({ target }) => setPassword(target.value)}
+          handleSubmit={handleLogin}
+        />
       </div>
     )
   }
 
-
   // user is logged in
   return (
     <div>
-      <h2>blogs</h2>
+      <h2>blogs app</h2>
       <div>{errorMessage}</div>
       <div>
         logged in as {user.name} 
         <button onClick={handleLogout}>logout</button>
       </div>
 
-      <h2>create new</h2>
-      <form onSubmit={handleNewBlog}>
-        <div>
-            title
-            <input
-              type="text"
-              value={newBlog.title}
-              name="title"
-              onChange={({ target }) => setNewBlog({...newBlog, title: target.value})}
-            />
-        </div>
-        <div>
-            author
-            <input
-              type="text"
-              value={newBlog.author}
-              name="author"
-              onChange={({ target }) => setNewBlog({...newBlog, author: target.value})}
-            />
-        </div>
-        <div>
-            url
-            <input
-              type="text"
-              value={newBlog.url}
-              name="url"
-              onChange={({ target }) => setNewBlog({...newBlog, url: target.value})}
-            />
-        </div>
-        <button type="submit">submit</button>
-      </form>
+      <BlogForm sendBlogTo={handleNewBlog}/>
 
-      {blogs.map(blog => <Blog key={blog.id} blog={blog} /> )}
+      <h2>blogs feed</h2>
+      <Blogs 
+        blogs={blogs} 
+        handleLike={handleLike} 
+        currentUser={user} 
+        handleRemove = {handleRemove} 
+      />
     </div>
   )
 }
