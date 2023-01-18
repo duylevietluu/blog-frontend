@@ -1,28 +1,27 @@
+import { Row } from 'react-bootstrap'
 import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import BlogForm from './BlogForm'
 
+const BlogButton = ({ blog }) => {
+    return (
+        <div className="col-12 col-md-4 col-lg-3">
+            <Link to={`/blogs/${blog.id}`}>
+                {blog.title}
+            </Link>
+        </div>
+    )
+}
 
 const Blogs = () => {
-    const blogStyle = {
-        paddingTop: 2,
-        paddingLeft: 2,
-        border: 'solid',
-        borderWidth: 1,
-        marginBottom: 5
-    }
     const sortedBlogs = [...useSelector(state => state.blogs)]
     sortedBlogs.sort((blog1, blog2) => blog2.likes - blog1.likes)
     return (<>
+        <h2>Blogs Feed</h2>
         <BlogForm />
-        <h2>blogs feed</h2>
-        {sortedBlogs.map(blog => 
-            <div style={blogStyle} key={blog.id}>
-                <Link to={`/blogs/${blog.id}`}>
-                    {blog.title}
-                </Link>
-            </div>
-        )}
+        <Row>
+            {sortedBlogs.map(blog => <BlogButton blog={blog} key={blog.id} />)}
+        </Row>
     </>)
 }
 

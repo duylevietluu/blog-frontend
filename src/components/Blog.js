@@ -1,7 +1,8 @@
 import { useDispatch, useSelector } from "react-redux"
 import { addComment, likeBlog, removeBlog } from "../reducers/blogsReducer"
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useState } from "react"
+import { Button, Form, Table } from "react-bootstrap"
 
 
 const Blog = () => {
@@ -13,14 +14,13 @@ const Blog = () => {
   const dispatch = useDispatch()
   const currentUser = useSelector(state => state.user)
 
-  if (!blog || !currentUser) {
-    return null
-  }
+  const navigate = useNavigate()
 
-  const removeable = currentUser.username === blog.user.username
+  const removeable = currentUser && currentUser.username === blog.user.username
   const handleRemove = blog => {
     if (window.confirm(`remove ${blog.title}?`)) {
       dispatch(removeBlog(blog.id))
+      navigate('/')
     }
   }
 
@@ -30,27 +30,33 @@ const Blog = () => {
     setComment("")
   }
 
-  return(
+  return( blog && 
     <div>
       <h2>{blog.title} {blog.author}</h2>
       <a href={blog.url}>{blog.url}</a>
-      <p>
-        {blog.likes} 
-        <button onClick={() => dispatch(likeBlog(blog))}>like</button>
-      </p>
-      <p>{blog.user.name}</p>
-      {removeable && <button onClick={() => handleRemove(blog)}>remove</button>}
 
-      <h3>Comments</h3>
-      <form onSubmit={handleComment}>
-            <input type="text" value={comment} name="comment" 
-              onChange={({ target }) => setComment(target.value)}
-            />
-            <button type="submit">submit</button> 
-        </form>
-      <ul>
-        {blog.comments.map((item, id) => <li key={id}>{item}</li>)}
-      </ul>
+      <p className="">
+        <span className="p-2">{blog.likes}</span>
+        <Button size='sm' onClick={() => dispatch(likeBlog(blog))}>like</Button>
+      </p>
+      <p>posted by {blog.user.name}</p>
+      {removeable && <Button size='sm' variant="danger" onClick={() => handleRemove(blog)}>Remove</Button>}
+
+
+      <Form onSubmit={handleComment}>
+        <Form.Group>
+          <Form.Label size='sm'>Leave a Comment</Form.Label>
+          <Form.Control size='sm' type="text" value={comment} name="comment" 
+            onChange={({ target }) => setComment(target.value)} />
+          <Button size='sm' variant="primary" type="submit">comment</Button>
+        </Form.Group>
+      </Form>
+
+      <Table striped>
+        <tbody>
+          {blog.comments.map((item, id) => <tr key={id}><td>{item}</td></tr>)}
+        </tbody>
+      </Table>
     </div>  
   )
 }

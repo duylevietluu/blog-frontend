@@ -36,20 +36,20 @@ export const initializeBlogs = () => {
     }
 }
 
-export const createBlog = blogInfo => {
+export const createBlog = (blogInfo, currentUser) => {
     return async dispatch => {
         try {
             const newBlog = await blogService.create(blogInfo)
-            dispatch(appendBlog(newBlog))
+            dispatch(appendBlog({...newBlog, user: currentUser}))
 
-            dispatch(displayMessage(`SUCCESS: created new blog ${newBlog.title}`))
+            dispatch(displayMessage(true, `created new blog ${newBlog.title}`))
         } catch(error) {
             if (error.response === undefined || error.response.data === undefined) {
-                dispatch(displayMessage('ERROR: unknown error, see console'))
+                dispatch(displayMessage(false, 'ERROR: unknown error, see console'))
                 console.error(error.response || error)
             }
             else {
-                dispatch(displayMessage('ERROR: ' + error.response.data.error))
+                dispatch(displayMessage(false, error.response.data.error))
             }
         }
     }
@@ -72,9 +72,9 @@ export const removeBlog = id => {
         try {
             await blogService.remove(id)
             dispatch(destroyBlog(id))
-            dispatch(displayMessage(`SUCCESS: removed item`))
+            dispatch(displayMessage(true, `removed item successfully`))
         } catch (error) {
-            dispatch(displayMessage(`ERROR: cannot remove`))
+            dispatch(displayMessage(false, `error: cannot remove`))
             console.error(error.response || error)
         }
     }
@@ -85,9 +85,9 @@ export const addComment = (id, comment) => {
         try {
             await blogService.createComment(id, comment)
             dispatch(appendComment({id, comment}))
-            dispatch(displayMessage(`SUCCESS: commented`))
+            dispatch(displayMessage(true, `commented successfully`))
         } catch (error) {
-            dispatch(displayMessage(`ERROR: cannot comment`))
+            dispatch(displayMessage(false, `error: cannot comment`))
             console.error(error.response || error)
         }
     }

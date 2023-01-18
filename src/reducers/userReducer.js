@@ -23,7 +23,6 @@ const userSlice = createSlice({
         },
         logoutUser(state, action) {
             window.localStorage.removeItem('loggedUser')
-            console.log(window.localStorage)
             blogService.setToken(null)
             return null
         }
@@ -32,24 +31,24 @@ const userSlice = createSlice({
 
 export const { setUser, initUser, logoutUser } = userSlice.actions
 
-export const loginUser = userLogInfo => {
+export const loginUser = (userLogInfo, afterLogin) => {
     return async dispatch => {
         try {            
             const user = await loginService.login(userLogInfo)
             
-            console.log(3);
             dispatch(setUser(user))
-            dispatch(displayMessage('SUCCESS: login'))
+            dispatch(displayMessage(true, 'login successfully'))
             
-            console.log(4);
             // set token
             blogService.setToken(user.token)
             window.localStorage.setItem('loggedUser', JSON.stringify(user))
 
             dispatch(resetLogin())
+
+            afterLogin()
         } catch(error) {
             console.log(error)
-            dispatch(displayMessage('ERROR: wrong credentials'))
+            dispatch(displayMessage(false, 'error: wrong credentials'))
         }
     }
 }
