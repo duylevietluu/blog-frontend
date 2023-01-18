@@ -1,5 +1,5 @@
 import axios from 'axios'
-const baseUrl = '/api/blogs'
+const baseUrl = 'http://localhost:3003/api/blogs'
 
 let token = null
 
@@ -26,6 +26,11 @@ const create = async(newObject) => {
   return response.data
 }
 
+const createComment = async(id, comment) => {
+  const response = await axios.post(`${baseUrl}/${id}/comments`, {comment})
+  return response.data
+}
+
 const update = async(id, newObject) => {
   const response = await axios.put(`${ baseUrl }/${id}`, newObject)
   return response.data
@@ -41,6 +46,6 @@ const remove = async (id) => {
   return response.data
 }
 
-const blogService = { getAll, setToken, create, update, remove }
+const blogService = { getAll, setToken, create, createComment, update, remove }
 
 export default blogService
